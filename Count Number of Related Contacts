@@ -1,49 +1,29 @@
+**// Problem Statement: Write a trigger to Count Contacts related to an Account when contact record is inserted or deleted. Update No_of_contacts__c field on Contact.**
+
 // Trigger
-trigger CountContactsOnAccount on Contact (after insert, after update, after delete, after undelete) {
-    if (Trigger.isAfter) {
-        if (Trigger.isInsert || Trigger.isUpdate) {
-            ContactTriggerHandler.handleAfterInsertUpdate(Trigger.new);
-        }
-        if (Trigger.isDelete) {
-            ContactTriggerHandler.handleAfterDelete(Trigger.old);
-        }
-        if (Trigger.isUndelete) {
-            ContactTriggerHandler.handleAfterUndelete(Trigger.new);
-        }
-    }
+trigger CountContactsOnAccount on Contact (after insert, after update, after delete, after undelete) {    
+    ContactHandler ch=new ContactHandler();
+    if(Trigger.isDelete){
+        	ch.countContacts(Trigger.old);
+    } else {
+        ch.countContacts(Trigger.new);
+    }    
 }
 
 // Trigger Handler Class
-public class ContactTriggerHandler {
-    public static void handleAfterInsertUpdate(List<Contact> contacts) {
+public class ContactHandler {
+    public void countContacts(List<Contact> conList){
         Set<Id> accountIds = new Set<Id>();
-        for (Contact contact : contacts) {
-            accountIds.add(contact.AccountId);
+    	for (Contact contact : conList) {
+        	accountIds.add(contact.AccountId);
+    	}
+    	List<Account> accountsToUpdate = new List<Account>();
+    	for (AggregateResult aggregate : [SELECT COUNT(Id) contactsCount, AccountId FROM Contact WHERE AccountId IN :accountIds GROUP BY AccountId]) {
+        	Account acc=new Account();
+            acc.Id= (Id)aggregate.get('AccountId');
+            acc.No_of_contacts__c= (Integer)aggregate.get('contactsCount');
+    		accountsToUpdate.add(acc);
         }
-        updateAccountNoOfContacts(accountIds);
-    }
-    
-    public static void handleAfterDelete(List<Contact> contacts) {
-        Set<Id> accountIds = new Set<Id>();
-        for (Contact contact : contacts) {
-            accountIds.add(contact.AccountId);
-        }
-        updateAccountNoOfContacts(accountIds);
-    }
-    
-    public static void handleAfterUndelete(List<Contact> contacts) {
-        Set<Id> accountIds = new Set<Id>();
-        for (Contact contact : contacts) {
-            accountIds.add(contact.AccountId);
-        }
-        updateAccountNoOfContacts(accountIds);
-    }
-    
-    private static void updateAccountNoOfContacts(Set<Id> accountIds) {
-        List<Account> accountsToUpdate = new List<Account>();
-        for (AggregateResult aggregate : [SELECT COUNT(Id) contactsCount, AccountId FROM Contact WHERE AccountId IN :accountIds GROUP BY AccountId]) {
-            accountsToUpdate.add(new Account(Id = (Id)aggregate.get('AccountId'), No_of_contacts__c = (Integer)aggregate.get('contactsCount')));
-        }
-        update accountsToUpdate;
+    	update accountsToUpdate;
     }
 }
