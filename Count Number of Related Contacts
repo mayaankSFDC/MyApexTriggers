@@ -1,0 +1,49 @@
+// Trigger
+trigger CountContactsOnAccount on Contact (after insert, after update, after delete, after undelete) {
+    if (Trigger.isAfter) {
+        if (Trigger.isInsert || Trigger.isUpdate) {
+            ContactTriggerHandler.handleAfterInsertUpdate(Trigger.new);
+        }
+        if (Trigger.isDelete) {
+            ContactTriggerHandler.handleAfterDelete(Trigger.old);
+        }
+        if (Trigger.isUndelete) {
+            ContactTriggerHandler.handleAfterUndelete(Trigger.new);
+        }
+    }
+}
+
+// Trigger Handler Class
+public class ContactTriggerHandler {
+    public static void handleAfterInsertUpdate(List<Contact> contacts) {
+        Set<Id> accountIds = new Set<Id>();
+        for (Contact contact : contacts) {
+            accountIds.add(contact.AccountId);
+        }
+        updateAccountNoOfContacts(accountIds);
+    }
+    
+    public static void handleAfterDelete(List<Contact> contacts) {
+        Set<Id> accountIds = new Set<Id>();
+        for (Contact contact : contacts) {
+            accountIds.add(contact.AccountId);
+        }
+        updateAccountNoOfContacts(accountIds);
+    }
+    
+    public static void handleAfterUndelete(List<Contact> contacts) {
+        Set<Id> accountIds = new Set<Id>();
+        for (Contact contact : contacts) {
+            accountIds.add(contact.AccountId);
+        }
+        updateAccountNoOfContacts(accountIds);
+    }
+    
+    private static void updateAccountNoOfContacts(Set<Id> accountIds) {
+        List<Account> accountsToUpdate = new List<Account>();
+        for (AggregateResult aggregate : [SELECT COUNT(Id) contactsCount, AccountId FROM Contact WHERE AccountId IN :accountIds GROUP BY AccountId]) {
+            accountsToUpdate.add(new Account(Id = (Id)aggregate.get('AccountId'), No_of_contacts__c = (Integer)aggregate.get('contactsCount')));
+        }
+        update accountsToUpdate;
+    }
+}
