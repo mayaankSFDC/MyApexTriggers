@@ -1,0 +1,28 @@
+Problem Statement: Write a trigger to create a trigger that creates number of contacts related to inserted Account record based on numeric value in Contacts_to_create__c.
+
+// Trigger
+trigger AccountTrigger on Account (after insert) {
+    AccountTriggerHandler.createRelatedContacts(Trigger.new);
+}
+
+// Trigger Handler Class
+public class AccountTriggerHandler {
+    public static void createRelatedContacts(List<Account> newAccounts) {
+        List<Contact> newContacts = new List<Contact>();
+        
+        for (Account acc : newAccounts) {
+            if (acc.Contacts_to_create__c > 0) {
+                for (Integer i = 1; i <= acc.Contacts_to_create__c; i++) {
+                    Contact con = new Contact();
+                    con.AccountId = acc.Id;
+                    con.LastName = acc.Name + ' ' + i;
+                    newContacts.add(con);
+                }
+            }
+        }
+        
+        if (!newContacts.isEmpty()) {
+            insert newContacts;
+        }
+    }
+}
