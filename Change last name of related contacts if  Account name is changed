@@ -1,15 +1,15 @@
 //TRIGGER
 trigger AccountTrigger on Account(after update){    
     AccountHandler obj= new AccountHandler();
-    obj.handleUpdate(Trigger.oldMap, Trigger.new);
+    obj.handleUpdate(Trigger.oldMap, Trigger.newMap);
 }
 
 //TRIGGER HANDLER CLASS
 public class AccountHandler{
-	public void handleUpdate(Map<Id, Account> oldAccMap, List<Account> newAccList) {
+	public void handleUpdate(Map<Id, Account> oldAccMap, Map<Id, Account> newAccMap) {
         Set<Id> accountIds = new Set<Id>();
         List<Contact> contactsToUpdate = new List<Contact>();
-        for (Account a : newAccList) {
+        for (Account a : newAccMap.values() {
             if (a.Name != oldAccMap.get(a.Id).Name) {
                 accountIds.add(a.Id);
             }
