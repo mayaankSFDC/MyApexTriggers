@@ -1,0 +1,30 @@
+//TRIGGER
+trigger AccountTrigger on Account(after update){    
+    AccountHandler obj= new AccountHandler();
+    obj.handleUpdate(Trigger.oldMap, Trigger.new);
+}
+
+//TRIGGER HANDLER CLASS
+public class AccountHandler{
+	public void handleUpdate(Map<Id, Account> oldAccMap, List<Account> newAccList) {
+        Set<Id> accountIds = new Set<Id>();
+        List<Contact> contactsToUpdate = new List<Contact>();
+        for (Account a : newAccList) {
+            if (a.Name != oldAccMap.get(a.Id).Name) {
+                accountIds.add(a.Id);
+            }
+        }        
+        
+        List<Contact> relatedContacts = [SELECT Id, LastName, AccountId FROM Contact WHERE AccountId IN :accountIds];
+        for (Contact c : relatedContacts) {
+            //Account acc = newAccMap.get(c.AccountId);    //If need to use new Name from Account then use this commented code
+            //c.LastName = acc.Name;
+            c.LastName = c.LastName + ' Updated';
+            contactsToUpdate.add(c);
+        }
+        
+        if (!accountIds.isEmpty()) {
+            update contactsToUpdate;
+        }
+    }
+}
