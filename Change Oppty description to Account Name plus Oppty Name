@@ -1,0 +1,25 @@
+When an opportunity is inserted then update the description of opportunity to Account Name hyphen Opportunity Name
+=========================================================
+trigger OpptyTrigger on Opportunity (before insert) {
+    OpptyHandler oh = new OpptyHandler();
+    oh.handleInsert(Trigger.new);
+}
+
+public class OpptyHandler {
+    public void handleInsert(List<Opportunity> oppList) {
+        Set<Id> listOfAccountIds = new Set<Id>();
+        
+        for (Opportunity o : oppList) {
+            listOfAccountIds.add(o.AccountId);
+        }
+        
+        Map<Id, Account> mapOfAccounts = new Map<Id, Account>([SELECT Id, Name FROM Account WHERE Id IN :listOfAccountIds]);
+        
+        for (Opportunity o : oppList) {
+            if (mapOfAccounts.containsKey(o.AccountId)) {
+                Account acc = mapOfAccounts.get(o.AccountId);
+                o.Description = acc.Name + ' - ' + o.Name;
+            }
+        }
+    }
+}
