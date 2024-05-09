@@ -1,0 +1,31 @@
+Custom Object : Address(City || PinCode || State || Country) Total 20 Lakhs Records
+
+Requirement
+ 
+When any user create account record and at time of creating record we need to check ShippingCity and ShippingPinCode and search suitable matching record in Address object and if we find any matching record then we need to populate state and country value from Address record to Account ShippingState and ShippingCountry record.
+=================================================================================
+
+
+Trigger ValidateAddress on Account(before insert){
+	Set<String> setOfCity = new Set<String>();
+	Set<String> setOfPinCode = new Set<String>();
+	for(Account accountRecord : Trigger.new){
+		if(!String.isEmpty(accountRecord.ShippingCity)){
+			setOfCity.add(accountRecord.ShippingCity);
+		}
+		if(!String.isEmpty(accountRecord.ShippingPostalCode)){
+			setOfPinCode.add(accountRecord.ShippingPostalCode);
+		}
+	}
+	List<Address__c> listOfAddresses = [Select Id, City__c, PinCode__c, State__c, Country__c From Address__c Where City__c IN: setOfCity And PinCode__c IN: setOfPinCode];
+	Map<String, Address__c> mapOfAddresses = new Map<String, Address__c>();
+	for(Address__c addressRecord : listOfAddresses){
+		mapOfAddresses.put(addressRecord.City__c + addressRecord.PinCode__c, addressRecord);
+	}
+	for(Account accountRecord : Trigger.new){
+		if(mapOfAddresses.containskey(accountRecord.ShippingCity + accountRecord.ShippingPostalCode)){
+			accountRecord.ShippingState = mapOfAddresses.get(accountRecord.ShippingCity + accountRecord.ShippingPostalCode).State__c;
+			accountRecord.ShippingCountry = mapOfAddresses.get(accountRecord.ShippingCity + accountRecord.ShippingPostalCode).Country__c;
+		}
+	}
+}
