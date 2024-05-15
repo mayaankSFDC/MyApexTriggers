@@ -5,20 +5,18 @@ trigger OpptyTrigger on Opportunity (before insert) {
     oh.handleInsert(Trigger.new);
 }
 
-public class OpptyHandler {
-    public void handleInsert(List<Opportunity> oppList) {
-        Set<Id> listOfAccountIds = new Set<Id>();
-        
-        for (Opportunity o : oppList) {
-            listOfAccountIds.add(o.AccountId);
+public class opptyHandler {
+    public void handleInsert(List<opportunity> oppList){
+        Set<Id> accountIds=new Set<Id>();
+        for(opportunity opp:oppList){
+            accountIds.add(opp.accountId);
         }
+        Map<Id, Account> mapOfAccounts=new Map<Id, Account>([select Id, Name from Account where Id IN :accountIds]);
+        /*This created a Map where key is Id of Account and value is Account record itself*/
         
-        Map<Id, Account> mapOfAccounts = new Map<Id, Account>([SELECT Id, Name FROM Account WHERE Id IN :listOfAccountIds]);
-        
-        for (Opportunity o : oppList) {
-            if (mapOfAccounts.containsKey(o.AccountId)) {
-                Account acc = mapOfAccounts.get(o.AccountId);
-                o.Description = acc.Name + ' - ' + o.Name;
+        for(opportunity o:oppList){
+            if(mapOfAccounts.containskey(o.AccountId)){
+                o.Description= mapOfAccounts.get(o.AccountId).Name + ' - ' + o.Name;
             }
         }
     }
