@@ -1,0 +1,46 @@
+/* write a trigger on contact which will create Account record whenever contact is created without an account */
+=================================================================================================================
+trigger contactTrigger on Contact (after insert) {
+	contactHandler ch=new contactHandler();
+    ch.handleInsert(Trigger.new);
+}
+
+public class contactHandler {
+    public void handleInsert(List<Contact> conList) {
+        List<Contact> contactsToUpdate = new List<Contact>();
+        List<Account> accountList = new List<Account>();
+        Map<String, Account> accountMap = new Map<String, Account>();
+
+        for (Contact con : conList) {
+            if (con.AccountId == null) {
+                Account acc = new Account();
+                acc.Name = 'Account for ' + con.LastName;
+                acc.Phone = con.Phone;
+                accountList.add(acc);
+                accountMap.put(acc.Name, acc);
+            }
+        }
+
+        if (!accountList.isEmpty()) {
+            insert accountList;
+            System.debug(accountList.size() + ' accounts created');
+
+            for (Contact con : conList) {
+                if (con.AccountId == null) {
+                    Account acc = accountMap.get('Account for ' + con.LastName);
+                    if (acc != null) {
+                        contact cont=new contact();  
+                        /* We need to create the above instance because cant directly perform changes in con, that gives error */
+                        cont.Id=con.Id;
+                        cont.AccountId = acc.Id;
+                        contactsToUpdate.add(cont);
+                    }
+                }
+            }
+
+            if (!contactsToUpdate.isEmpty()) {
+                update contactsToUpdate;
+            }
+        }
+    }
+}
