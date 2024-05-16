@@ -35,6 +35,8 @@ public class contactHandler {
                         /* We need to create the above instance because cant directly perform changes in con, that gives error */
                         cont.Id=con.Id;
                         cont.AccountId = acc.Id;
+				/* Even though accountMap was never inserted into database, the map allows direct access to the Account 
+				object based on the specified key, enabling retrieval of the Account Id for 4linking with the Contact records. */
                         contactsToUpdate.add(cont);
                     }
                 }
